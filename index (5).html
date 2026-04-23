@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบกองทุน (แพ่ง)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --neutral: #94a3b8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-icon {
+      width: 36px; height: 36px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 18px;
+    }
+    .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .topbar-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .sync-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1.5px solid;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sync-badge.ok { border-color: #86efac; background: #f0fdf4; color: #166534; }
+    .sync-badge.loading { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+    .sync-badge.error { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .sync-dot.pulse { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .datetime { font-size: 13px; color: var(--text-muted); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    /* MAIN */
+    .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    /* ALERT BANNER */
+    .alert-banner {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .alert-banner.show { display: block; }
+    .alert-banner-title {
+      font-weight: 700;
+      color: #92400e;
+      font-size: 14px;
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .alert-banner ul { list-style: none; padding: 0; }
+    .alert-banner li {
+      font-size: 13.5px;
+      color: #78350f;
+      padding: 2px 0;
+    }
+    .alert-banner li::before { content: "• "; font-weight: 700; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+    .stat-label { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-value.blue { color: var(--primary); }
+    .stat-value.red { color: var(--danger); }
+    .stat-value.amber { color: var(--warning); }
+    .stat-value.green { color: var(--success); }
+
+    /* TABLE SECTION */
+    .table-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .count-badge {
+      background: var(--primary);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .filter-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 12px;
+      gap: 7px;
+      background: var(--bg);
+    }
+    .search-box input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+      width: 180px;
+    }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .search-icon { color: var(--text-muted); font-size: 14px; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--bg); }
+    th {
+      text-align: left;
+      padding: 11px 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    .row-num { color: var(--text-muted); font-size: 13px; }
+
+    .case-name { font-weight: 600; color: var(--text); }
+    .case-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .deadline-cell { display: flex; flex-direction: column; gap: 2px; }
+    .deadline-date { font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
+    .deadline-days { font-size: 12px; color: var(--text-muted); }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .dot-red { background: var(--danger); }
+    .dot-amber { background: var(--warning); }
+    .dot-green { background: var(--success); }
+    .dot-gray { background: #cbd5e1; }
+
+    .action-btns { display: flex; gap: 6px; }
+    .icon-btn {
+      width: 32px; height: 32px;
+      border-radius: 7px;
+      border: 1.5px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+      color: var(--text-muted);
+    }
+    .icon-btn:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+    .icon-btn.delete:hover { border-color: var(--danger); color: var(--danger); background: #fef2f2; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state-text { font-size: 15px; margin-bottom: 6px; font-weight: 500; }
+    .empty-state-sub { font-size: 13px; }
+
+    /* MODAL */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-header {
+      padding: 20px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .modal-close:hover { background: var(--bg); }
+
+    .modal-body { padding: 20px 24px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .form-label span { color: var(--danger); margin-left: 2px; }
+    .form-control {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      background: white;
+      width: 100%;
+    }
+    .form-control:focus { border-color: var(--primary); }
+    textarea.form-control { resize: vertical; min-height: 72px; }
+    select.form-control { cursor: pointer; }
+
+    .modal-footer {
+      padding: 16px 24px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-secondary {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--bg); }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #1e293b;
+      color: white;
+      font-size: 13.5px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn 0.25s ease;
+      display: flex; align-items: center; gap: 8px;
+      max-width: 300px;
+    }
+    .toast.success { background: #166534; }
+    .toast.error { background: #991b1b; }
+    @keyframes toastIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    /* DELETE CONFIRM */
+    .confirm-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.45);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .confirm-backdrop.show { display: flex; }
+    .confirm-box {
+      background: white;
+      border-radius: 14px;
+      padding: 28px 28px 24px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.2s ease;
+      text-align: center;
+    }
+    .confirm-icon { font-size: 36px; margin-bottom: 12px; }
+    .confirm-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .confirm-msg { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-danger {
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: none;
+      background: var(--danger);
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-danger:hover { background: #dc2626; }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .topbar { padding: 0 16px; }
+      .main { padding: 16px; }
+      .datetime { display: none; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-icon">⚖️</div>
+    <div>
+      <div class="topbar-title">ระบบกองทุน (แพ่ง) ✏️</div>
+      <div class="topbar-sub">กรมสวัสดิการและคุ้มครองแรงงาน จ.นนทบุรี</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div id="syncBadge" class="sync-badge ok" onclick="syncNow()">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncText">ซิงค์แล้ว</span>
+    </div>
+    <div class="datetime" id="datetime"></div>
+    <button class="btn-primary" onclick="openAddModal()">
+      <span>+</span> เพิ่มคดีใหม่
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ALERT BANNER -->
+  <div class="alert-banner" id="alertBanner">
+    <div class="alert-banner-title">🟡 ใกล้ครบกำหนด <span id="alertCount">0</span> คดี:</div>
+    <ul id="alertList"></ul>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">คดีทั้งหมด</div>
+      <div class="stat-value blue" id="statTotal">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--danger)"></span> เกินกำหนด
+      </div>
+      <div class="stat-value red" id="statOverdue">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--warning)"></span> ใกล้ครบกำหนด (≤7 วัน)
+      </div>
+      <div class="stat-value amber" id="statSoon">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--success)"></span> ปกติ
+      </div>
+      <div class="stat-value green" id="statOk">0</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-title">
+        รายการคดี
+        <span class="count-badge" id="tableCount">0</span> คดี
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn active" onclick="setFilter('all', this)">ทั้งหมด</button>
+        <button class="filter-btn" onclick="setFilter('overdue', this)">เกินกำหนด</button>
+        <button class="filter-btn" onclick="setFilter('soon', this)">ใกล้ครบ</button>
+        <button class="filter-btn" onclick="setFilter('ok', this)">ปกติ</button>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="ค้นหาชื่อคดี / นายจ้าง..." oninput="renderTable()" />
+        </div>
+      </div>
+    </div>
+
+    <div id="tableContainer">
+      <table id="caseTable">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>ชื่อคดี / ชื่อนายจ้าง</th>
+            <th>สถานะปัจจุบัน</th>
+            <th>NEXT STEPS</th>
+            <th>กำหนดเวลา</th>
+            <th style="width:90px">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="caseTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-state-icon">📁</div>
+        <div class="empty-state-text">ยังไม่มีรายการคดี</div>
+        <div class="empty-state-sub">กดปุ่ม "+ เพิ่มคดีใหม่" เพื่อเริ่มต้น</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL: ADD / EDIT -->
+<div class="modal-backdrop" id="caseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">เพิ่มคดีใหม่</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">เลขที่คดี / รหัสอ้างอิง</label>
+          <input class="form-control" id="fCaseNo" placeholder="เช่น นบ.001/68" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อนายจ้าง / บริษัท <span>*</span></label>
+          <input class="form-control" id="fEmployer" placeholder="ชื่อบริษัทหรือนายจ้าง" />
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">สถานะปัจจุบัน <span>*</span></label>
+          <textarea class="form-control" id="fStatus" placeholder="กรอกสถานะและรายละเอียดคดีปัจจุบัน" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">NEXT STEPS</label>
+          <textarea class="form-control" id="fNextSteps" placeholder="เช่น จัดทำหนังสือเตือนครั้งที่ 2" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">กำหนดเวลา</label>
+          <input type="date" class="form-control" id="fDeadline" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">ประเภทคดี</label>
+          <select class="form-control" id="fType">
+            <option value="กองทุนสงเคราะห์">กองทุนสงเคราะห์</option>
+            <option value="ค่าจ้าง">ค่าจ้าง</option>
+            <option value="ชดเชย">ชดเชย</option>
+            <option value="อื่น ๆ">อื่น ๆ</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ</label>
+          <textarea class="form-control" id="fNote" placeholder="บันทึกเพิ่มเติม (ไม่บังคับ)" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="saveCase()">
+        💾 บันทึกคดี
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-backdrop" id="confirmDelete">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">ยืนยันการลบคดี?</div>
+    <div class="confirm-msg">คดีนี้จะถูกลบออกถาวร และซิงค์ไปยัง Google Sheets ทันที</div>
+    <div class="confirm-actions">
+      <button class="btn-secondary" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn-danger" onclick="confirmDeleteCase()">ลบออก</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+// CONFIG — แก้ค่า SCRIPT_URL หลังจาก deploy Google Apps Script
+// ============================================================
+const CONFIG = {
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzoSZPOy2Fg5QKTtYg3tIfSuwEaoUU70xVLsEED6dyB6ghNRpkWANAyzdNbWyywMDAKkQ/exec',
+  AUTO_SYNC_INTERVAL: 60000, // sync ทุก 60 วินาที
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let cases = [];
+let currentFilter = 'all';
+let editingId = null;
+let deletingId = null;
+let syncTimer = null;
+let lastSyncTime = null;
+
+// ============================================================
+// DATETIME
+// ============================================================
+function updateDatetime() {
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' };
+  document.getElementById('datetime').textContent = now.toLocaleDateString('th-TH', opts);
+}
+setInterval(updateDatetime, 30000);
+updateDatetime();
+
+// ============================================================
+// SYNC — Google Sheets
+// ============================================================
+function setSyncStatus(status, text) {
+  const badge = document.getElementById('syncBadge');
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncText');
+  badge.className = 'sync-badge ' + status;
+  dot.className = 'sync-dot' + (status === 'loading' ? ' pulse' : '');
+  label.textContent = text;
+}
+
+async function syncNow() {
+  if (!CONFIG.SCRIPT_URL || CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    showToast('⚠️ ยังไม่ได้ตั้งค่า SCRIPT_URL', 'error');
+    return;
+  }
+  setSyncStatus('loading', 'กำลังซิงค์...');
+  try {
+    const res = await fetch(CONFIG.SCRIPT_URL + '?action=get', { mode: 'cors' });
+    const data = await res.json();
+    if (data.success) {
+      cases = data.cases || [];
+      saveLocal();
+      renderAll();
+      lastSyncTime = new Date();
+      setSyncStatus('ok', 'ซิงค์แล้ว');
+      showToast('✅ ซิงค์ข้อมูลสำเร็จ', 'success');
+    } else {
+      throw new Error(data.error || 'Unknown error');
+    }
+  } catch (e) {
+    setSyncStatus('error', 'ซิงค์ล้มเหลว');
+    showToast('❌ ซิงค์ไม่สำเร็จ: ' + e.message, 'error');
+    // fallback to local
+    loadLocal();
+    renderAll();
+  }
+}
+
+// Apps Script ไม่รองรับ fetch POST จาก browser (CORS preflight ถูกบล็อก)
+// workaround มาตรฐาน: ส่งทุก action ผ่าน GET parameter แทน
+// ข้อมูล payload encode เป็น base64 ใน query string เดียว
+async function pushToSheet(action, payload) {
+  if (!CONFIG.SCRIPT_URL || CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') return;
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const url = CONFIG.SCRIPT_URL + '?action=' + action + '&data=' + encodeURIComponent(encoded);
+    const res = await fetch(url, { mode: 'cors' });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    setSyncStatus('ok', 'ซิงค์แล้ว');
+    lastSyncTime = new Date();
+  } catch (e) {
+    setSyncStatus('error', 'ซิงค์ล้มเหลว');
+    console.error('pushToSheet error:', e);
+  }
+}
+
+// ============================================================
+// LOCAL STORAGE (offline fallback)
+// ============================================================
+function saveLocal() {
+  localStorage.setItem('prosecutor_cases', JSON.stringify(cases));
+}
+function loadLocal() {
+  const raw = localStorage.getItem('prosecutor_cases');
+  cases = raw ? JSON.parse(raw) : [];
+}
+
+// ============================================================
+// DEADLINE UTILS
+// ============================================================
+// parse "YYYY-MM-DD" แบบ local timezone (ป้องกัน NaN จาก UTC offset)
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = String(dateStr).split('-');
+  if (parts.length !== 3) return null;
+  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function getDaysLeft(dateStr) {
+  const d = parseLocalDate(dateStr);
+  if (!d) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+
+function getStatusClass(daysLeft) {
+  if (daysLeft === null) return 'none';
+  if (daysLeft < 0) return 'overdue';
+  if (daysLeft <= 7) return 'soon';
+  return 'ok';
+}
+
+function formatThaiDate(dateStr) {
+  const d = parseLocalDate(dateStr);
+  if (!d) return null;
+  return d.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll() {
+  renderStats();
+  renderAlert();
+  renderTable();
+}
+
+function renderStats() {
+  const total = cases.length;
+  let overdue = 0, soon = 0, ok = 0;
+  cases.forEach(c => {
+    const s = getStatusClass(getDaysLeft(c.deadline));
+    if (s === 'overdue') overdue++;
+    else if (s === 'soon') soon++;
+    else if (s === 'ok') ok++;
+  });
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statOverdue').textContent = overdue;
+  document.getElementById('statSoon').textContent = soon;
+  document.getElementById('statOk').textContent = ok;
+}
+
+function renderAlert() {
+  const banner = document.getElementById('alertBanner');
+  const list = document.getElementById('alertList');
+  const countEl = document.getElementById('alertCount');
+  const urgent = cases.filter(c => {
+    const d = getDaysLeft(c.deadline);
+    return d !== null && d >= 0 && d <= 7;
+  }).sort((a,b) => getDaysLeft(a.deadline) - getDaysLeft(b.deadline));
+  
+  if (urgent.length === 0) { banner.classList.remove('show'); return; }
+  banner.classList.add('show');
+  countEl.textContent = urgent.length;
+  list.innerHTML = urgent.map(c => {
+    const d = getDaysLeft(c.deadline);
+    const label = d === 0 ? 'วันนี้!' : `อีก ${d} วัน`;
+    return `<li>${c.employer}${c.caseNo ? ' (' + c.caseNo + ')' : ''} — ${formatThaiDate(c.deadline)} (${label})</li>`;
+  }).join('');
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  let filtered = cases.filter(c => {
+    const matchSearch = !search || 
+      (c.employer || '').toLowerCase().includes(search) ||
+      (c.caseNo || '').toLowerCase().includes(search) ||
+      (c.status || '').toLowerCase().includes(search);
+    const d = getDaysLeft(c.deadline);
+    const s = getStatusClass(d);
+    const matchFilter = currentFilter === 'all' || s === currentFilter;
+    return matchSearch && matchFilter;
+  });
+
+  document.getElementById('tableCount').textContent = filtered.length;
+
+  const tbody = document.getElementById('caseTableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map((c, i) => {
+    const daysLeft = getDaysLeft(c.deadline);
+    const statusClass = getStatusClass(daysLeft);
+    let dotColor = 'dot-gray';
+    let deadlineHtml = '<span style="color:var(--text-muted);font-size:13px">ไม่ระบุ</span>';
+    
+    if (c.deadline) {
+      if (statusClass === 'overdue') dotColor = 'dot-red';
+      else if (statusClass === 'soon') dotColor = 'dot-amber';
+      else dotColor = 'dot-green';
+      
+      const absDay = Math.abs(daysLeft);
+      const dayLabel = daysLeft < 0 ? `เกิน ${absDay} วัน` : daysLeft === 0 ? 'วันนี้!' : `อีก ${daysLeft} วัน`;
+      const dateColor = statusClass === 'overdue' ? 'var(--danger)' : statusClass === 'soon' ? 'var(--warning)' : 'var(--text)';
+      deadlineHtml = `
+        <div class="deadline-cell">
+          <div class="deadline-date" style="color:${dateColor}">
+            <span class="status-dot ${dotColor}"></span>
+            ${formatThaiDate(c.deadline)}
+          </div>
+          <div class="deadline-days">${dayLabel}</div>
+        </div>`;
+    } else {
+      deadlineHtml = `
+        <div class="deadline-date">
+          <span class="status-dot dot-gray"></span>
+          <span style="color:var(--text-muted);font-size:13px">ไม่ระบุ</span>
+        </div>`;
+    }
+
+    return `<tr>
+      <td class="row-num">${i + 1}</td>
+      <td>
+        <div class="case-name">${esc(c.employer || '—')}</div>
+        <div class="case-sub">· ${esc(c.type || 'ไม่ระบุ')}${c.caseNo ? ' · ' + esc(c.caseNo) : ''}</div>
+      </td>
+      <td>${esc(c.status || '—')}</td>
+      <td>${c.nextSteps ? esc(c.nextSteps) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${deadlineHtml}</td>
+      <td>
+        <div class="action-btns">
+          <button class="icon-btn" onclick="openEditModal('${c.id}')" title="แก้ไข">✏️</button>
+          <button class="icon-btn delete" onclick="askDelete('${c.id}')" title="ลบ">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// FILTER
+// ============================================================
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+// ============================================================
+// MODAL: ADD / EDIT
+// ============================================================
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'เพิ่มคดีใหม่';
+  clearForm();
+  document.getElementById('caseModal').classList.add('show');
+}
+
+function openEditModal(id) {
+  const c = cases.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'แก้ไขคดี';
+  document.getElementById('fCaseNo').value = c.caseNo || '';
+  document.getElementById('fEmployer').value = c.employer || '';
+  document.getElementById('fStatus').value = c.status || '';
+  document.getElementById('fNextSteps').value = c.nextSteps || '';
+  document.getElementById('fDeadline').value = c.deadline || '';
+  document.getElementById('fType').value = c.type || 'กองทุนสงเคราะห์';
+  document.getElementById('fNote').value = c.note || '';
+  document.getElementById('caseModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('caseModal').classList.remove('show');
+  editingId = null;
+}
+
+function clearForm() {
+  ['fCaseNo','fEmployer','fStatus','fNextSteps','fDeadline','fNote'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fType').value = 'กองทุนสงเคราะห์';
+}
+
+async function saveCase() {
+  const employer = document.getElementById('fEmployer').value.trim();
+  const status = document.getElementById('fStatus').value.trim();
+  if (!employer) { showToast('⚠️ กรุณากรอกชื่อนายจ้าง/บริษัท', 'error'); return; }
+  if (!status) { showToast('⚠️ กรุณากรอกสถานะปัจจุบัน', 'error'); return; }
+
+  const payload = {
+    caseNo: document.getElementById('fCaseNo').value.trim(),
+    employer,
+    status,
+    nextSteps: document.getElementById('fNextSteps').value.trim(),
+    deadline: document.getElementById('fDeadline').value,
+    type: document.getElementById('fType').value,
+    note: document.getElementById('fNote').value.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (editingId) {
+    const idx = cases.findIndex(c => c.id === editingId);
+    if (idx >= 0) {
+      cases[idx] = { ...cases[idx], ...payload };
+      await pushToSheet('update', { id: editingId, ...payload });
+      showToast('✅ แก้ไขคดีสำเร็จ', 'success');
+    }
+  } else {
+    payload.id = 'case_' + Date.now();
+    payload.createdAt = new Date().toISOString();
+    cases.push(payload);
+    await pushToSheet('add', payload);
+    showToast('✅ เพิ่มคดีสำเร็จ', 'success');
+  }
+
+  saveLocal();
+  renderAll();
+  closeModal();
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+function askDelete(id) {
+  deletingId = id;
+  document.getElementById('confirmDelete').classList.add('show');
+}
+function closeConfirm() {
+  deletingId = null;
+  document.getElementById('confirmDelete').classList.remove('show');
+}
+async function confirmDeleteCase() {
+  if (!deletingId) return;
+  const id = deletingId;
+  cases = cases.filter(c => c.id !== id);
+  await pushToSheet('delete', { id });
+  saveLocal();
+  renderAll();
+  closeConfirm();
+  showToast('🗑️ ลบคดีสำเร็จ', 'success');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = '') {
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  loadLocal();
+  renderAll();
+  // Auto sync on load if URL configured
+  if (CONFIG.SCRIPT_URL && CONFIG.SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    syncNow();
+    syncTimer = setInterval(syncNow, CONFIG.AUTO_SYNC_INTERVAL);
+  } else {
+    setSyncStatus('error', 'ยังไม่ตั้งค่า URL');
+  }
+}
+
+// Close modals on backdrop click
+document.getElementById('caseModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('confirmDelete').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+init();
+</script>
+</body>
+</html>
